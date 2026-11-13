@@ -9,7 +9,7 @@ Uso: python3 build.py
 from pathlib import Path
 
 raiz = Path(__file__).parent
-VERSAO = "20261113c"  # mude a cada publicação para os celulares baixarem a novidade
+VERSAO = "20261113d"  # mude a cada publicação para os celulares baixarem a novidade
 
 src = (raiz / "app.src.html").read_text(encoding="utf-8")
 fim_head = src.index("</style>") + len("</style>")

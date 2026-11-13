@@ -1,10 +1,10 @@
 /* Órbita IA: guarda o app no celular para abrir na hora, mesmo sem internet.
    A versão abaixo é atualizada pelo build.py a cada publicação. */
-const VERSION = 'orbita-ia-20261113c';
+const VERSION = 'orbita-ia-20261113d';
 const CORE = [
   './',
   'index.html',
-  'assistente.js?v=20261113c',
+  'assistente.js?v=20261113d',
   'manifest.webmanifest',
   'assets/logo192.png',
   'assets/app/icon-192.png',

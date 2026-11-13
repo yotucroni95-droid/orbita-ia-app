@@ -252,7 +252,7 @@
     const conta = contaDe(s, categoria);
     const d = dataDe(txt, false) || new Date();
     let descricao = limpar(converterValores(txt)) || categoria;
-    if (descricao.length < 2) descricao = categoria;
+    if (descricao.length < 2 || /^(que|de|do|da|com|reais|real)$/i.test(descricao)) descricao = categoria;
     C.tool("registrar_lancamento", { tipo, valor, descricao, categoria, conta, data: iso(d) });
     ultimo = { k: "tx", id: C.S().tx[C.S().tx.length - 1].id };
     const quando = fmtDia(d);
