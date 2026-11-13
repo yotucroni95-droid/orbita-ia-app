@@ -301,6 +301,9 @@
       return "Corrigido! Agora está: **" + t.descricao + "**, " + C.money(t.valor) + ", conta " + nomeConta(t.conta) + ".";
     }
 
+    const respostaBase = window.OrbitaConhecimento?.responder(txt);
+    if (respostaBase) return respostaBase;
+
     // conversa
     if (/^(oi|ola|opa|eai|e ai|bom dia|boa tarde|boa noite|hey|salve)\b/.test(s) && s.length < 30) {
       const n = S.nome ? ", " + S.nome.split(" ")[0] : "";
@@ -318,8 +321,8 @@
     }
 
     // perguntas
-    const pergunta = /\?$/.test(txt.trim()) || /^(quanto|quantos|quantas|qual|quais|como|onde|o que|oque|tenho|mostra|mostre|lista|liste|me fala|me diz|me mostra|resumo|cade|minhas?|meus?|ver|veja)\b/.test(s) || (s.split(" ").length <= 2 && /^(agenda|tarefas|metas|resumo|saldo|anotacoes|notas|gastos|contas)$/.test(s.replace(/^(minhas?|meus?) /, "")));
-    if (pergunta) { const r = consultar(s, txt); if (r) return r; }
+    const pergunta = /\?$/.test(txt.trim()) || /^(quanto|quantos|quantas|qual|quais|como|onde|o que|oque|tenho(?! que\b| de\b)|mostra|mostre|lista|liste|me fala|me diz|me mostra|resumo|cade|minhas?|meus?|ver|veja)\b/.test(s) || (s.split(" ").length <= 2 && /^(agenda|tarefas|metas|resumo|saldo|anotacoes|notas|gastos|contas)$/.test(s.replace(/^(minhas?|meus?) /, "")));
+    if (pergunta) { const r = consultar(s, txt); return r || "Essa pergunta ainda não está na minha base local. Posso dar dicas gerais para empresas, explicar algumas curiosidades ou consultar seus registros. Não fiz nenhuma anotação."; }
 
     // orçamento
     if (/\b(orcamento|limite)\b/.test(s) && valorDe(txt)) {
@@ -378,14 +381,7 @@
       return "Tarefa anotada para " + fmtDia(d) + ": **" + titulo + "**.";
     }
 
-    // pergunta que não entendi
-    if (pergunta) return "Essa eu ainda não sei responder. 😅 Posso te dizer **quanto gastou**, **quanto recebeu**, **como está o mês**, **o que tem na agenda**, **suas tarefas**, **suas metas** e **o que eu anotei**.";
-
-    // qualquer outra coisa: anota
-    const nota = txt.trim().replace(/^(anota|anote|anotar|nota|guarda|salva|lembra que|lembre que)\s*(que|:)?\s*/i, "");
-    C.tool("memorizar", { fato: cap(nota) });
-    ultimo = { k: "memoria", id: (S.memoria[S.memoria.length - 1] || {}).id };
-    return "Anotei: _" + cap(nota) + "_. Quando quiser ver, pergunte **o que você anotou?**";
+    return "Não reconheci esse pedido. Tenho respostas programadas, não conhecimento ilimitado. Tente **como melhorar minha empresa?**, **me conte uma curiosidade** ou **ajuda**. Para salvar uma informação, comece com **anota que...**. Não registrei nada com essa mensagem.";
   }
 
   function consultar(s, txt) {
@@ -460,7 +456,7 @@
     "- **criar meta de 10 mil para reserva** e depois **guardei 200 na meta**\n" +
     "- **anota que o cliente Pedro prefere WhatsApp**\n\n" +
     "E pode perguntar: **como estou este mês?**, **quanto gastei com mercado?**, **o que tenho amanhã?**, **quais contas vencem?**, **o que você anotou?**\n\n" +
-    "Errou? Diga **desfazer** ou **na verdade foi 60**.";
+    "Também tenho respostas programadas: **olá, tudo bem?**, **como vender mais?**, **como organizar minha semana?** e **me conte uma curiosidade**.\n\nErrou? Diga **desfazer** ou **na verdade foi 60**.";
 
   window.OrbitaAssistente = {
     ligar(core) { C = core; },

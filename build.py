@@ -9,7 +9,7 @@ Uso: python3 build.py
 from pathlib import Path
 
 raiz = Path(__file__).parent
-VERSAO = "20261113d"  # mude a cada publicação para os celulares baixarem a novidade
+VERSAO = "20261113e"  # mude a cada publicação para os celulares baixarem a novidade
 
 src = (raiz / "app.src.html").read_text(encoding="utf-8")
 fim_head = src.index("</style>") + len("</style>")
@@ -30,6 +30,7 @@ head = f"""<!doctype html>
 <meta name="apple-mobile-web-app-title" content="Órbita IA">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 {splash}
+<script src="base-conhecimento.js?v={VERSAO}"></script>
 <script src="assistente.js?v={VERSAO}"></script>
 """
 
@@ -57,3 +58,7 @@ sw = re.sub(r"assistente\.js\?v=[^']*'", f"assistente.js?v={VERSAO}'", sw)
 (raiz / "sw.js").write_text(sw, encoding="utf-8")
 print("index.html gerado · versão", VERSAO)
 
+
+sw = (raiz / "sw.js").read_text()
+sw = re.sub(r"base-conhecimento\.js\?v=[^' ]*", f"base-conhecimento.js?v={VERSAO}", sw)
+(raiz / "sw.js").write_text(sw)
