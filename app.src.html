@@ -379,50 +379,6 @@ const TABS=[["painel","Painel"],["financas","Finanças"],["ia","Órbita IA"],["a
 
 /* ---------- dados ---------- */
 function blank(){return{v:2,exemplo:false,nome:"",empresa:"",updatedAt:0,tx:[],eventos:[],tarefas:[],metas:[],orc:{},cats:{entrada:[],saida:[]},memoria:[],chat:[]}}
-function example(){
-  const S=blank();S.exemplo=true;const now=new Date();
-  for(let k=5;k>=0;k--){
-    const base=new Date(now.getFullYear(),now.getMonth()-k,1),m=ym(base),f=1+(5-k)*.045+((k%2)?-.04:.03);
-    const add=(dia,tipo,descricao,valor,categoria,conta)=>{if(k===0&&dia>now.getDate())return;S.tx.push({id:uid(),tipo,descricao,valor:Math.round(valor),categoria,conta,data:m+"-"+pad(dia)})};
-    add(4,"entrada","Vendas — 1ª quinzena",15800*f,"Vendas","empresa");
-    add(19,"entrada","Vendas — 2ª quinzena",13200*f,"Vendas","empresa");
-    add(9,"entrada","Consultoria — cliente Alfa",3500,"Serviços","empresa");
-    add(5,"saida","Aluguel do ponto",3200,"Aluguel","empresa");
-    add(8,"saida","Fornecedor de matéria-prima",7400*f,"Fornecedores","empresa");
-    add(5,"saida","Salários da equipe",8600,"Funcionários","empresa");
-    add(10,"saida","Parcela do financiamento da van",1450,"Financiamento","empresa");
-    add(16,"saida","Boleto — plano de saúde",920,"Boleto","pessoal");
-    add(20,"saida","DAS — Simples Nacional",1720*f,"Impostos","empresa");
-    add(11,"saida","Anúncios Instagram e Google",1100+(5-k)*90,"Marketing","empresa");
-    add(12,"saida","Energia elétrica",640,"Energia/Água","empresa");
-    add(3,"saida","Sistema de gestão",289,"Software","empresa");
-    add(5,"entrada","Pró-labore",7000,"Pró-labore","pessoal");
-    add(7,"saida","Supermercado",1380,"Alimentação","pessoal");
-    add(15,"saida","Escola das crianças",1850,"Educação","pessoal");
-  }
-  const at=(d,h,mi)=>{const x=new Date();x.setDate(x.getDate()+d);return iso(x)+"T"+pad(h)+":"+pad(mi||0)};
-  S.eventos=[
-    {id:uid(),titulo:"Pagar DAS do Simples",quando:at(0,17),tipo:"pagamento",feito:false},
-    {id:uid(),titulo:"Reunião com fornecedor de embalagens",quando:at(1,10),tipo:"compromisso",feito:false},
-    {id:uid(),titulo:"Enviar notas fiscais ao contador",quando:at(-1,9),tipo:"lembrete",feito:false},
-    {id:uid(),titulo:"Call com cliente Alfa — renovação",quando:at(3,15,30),tipo:"compromisso",feito:false},
-    {id:uid(),titulo:"Vencimento aluguel",quando:at(6,9),tipo:"pagamento",feito:false},
-    {id:uid(),titulo:"Revisão mensal de resultados",quando:at(9,8,30),tipo:"compromisso",feito:false}];
-  const dd=d=>{const x=new Date();x.setDate(x.getDate()+d);return iso(x)};
-  S.tarefas=[
-    {id:uid(),titulo:"Aprovar campanha de Black Friday",dia:dd(0),feito:false},
-    {id:uid(),titulo:"Conferir extrato bancário",dia:dd(0),feito:true},
-    {id:uid(),titulo:"Cotar 3 novos fornecedores",dia:dd(1),feito:false},
-    {id:uid(),titulo:"Atualizar tabela de preços",dia:dd(2),feito:false},
-    {id:uid(),titulo:"1:1 com gerente da loja",dia:dd(4),feito:false}];
-  S.metas=[
-    {id:uid(),nome:"Reserva de emergência (6 meses de custos)",alvo:60000,atual:23500,prazo:(now.getFullYear()+1)+"-06-30"},
-    {id:uid(),nome:"Faturamento de R$ 40 mil/mês",alvo:40000,atual:33000,prazo:(now.getFullYear()+1)+"-03-31"},
-    {id:uid(),nome:"Nova máquina de produção",alvo:18000,atual:6200,prazo:(now.getFullYear()+1)+"-09-30"}];
-  S.memoria=[{id:uid(),texto:"Exemplo: empresa de confecção com 4 funcionários, vende pelo Instagram e em loja física.",data:today()}];
-  S.orc={"Fornecedores":9000,"Marketing":1500,"Funcionários":9000,"Energia/Água":700,"Alimentação":1500,"Educação":1850};
-  return S;
-}
 function normalize(s){
   if(!s||typeof s!=="object")return null;const b=blank();
   for(const k of["tx","eventos","tarefas","metas","chat"])b[k]=Array.isArray(s[k])?s[k]:[];
@@ -434,7 +390,7 @@ function normalize(s){
   b.chat=b.chat.filter(m=>m&&typeof m.content==="string");return b;
 }
 let S=null;try{S=normalize(JSON.parse(localStorage.getItem(LS)||"null"))}catch(e){}
-if(!S)S=example();
+if(!S || S.exemplo)S=blank();
 
 let tab="painel",fin={conta:"todas",mes:ym(new Date()),q:""},cal={m:new Date(new Date().getFullYear(),new Date().getMonth(),1),sel:today()},confirmWipe=false,busy=false,ctrl=null;
 let dbDoc=null,saveT=null,sample=null,sampleKnown=false,downloads=null;
@@ -442,7 +398,9 @@ let dbDoc=null,saveT=null,sample=null,sampleKnown=false,downloads=null;
 function setSync(t,ok){$("#syncTxt").textContent=t;$("#syncDot").style.background=ok?"var(--pos)":"var(--warn)"}
 function persist(){
   S.updatedAt=Date.now();if(S.chat.length>50)S.chat=S.chat.slice(-50);
-  try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){}
+  try{localStorage.setItem(LS,JSON.stringify(S));setSync("Salvo neste aparelho",true)}
+  catch(e){setSync("Não foi possível salvar — baixe um backup",false);toast("Armazenamento indisponível ou cheio. Baixe um backup em Ajustes.");}
+
   clearTimeout(saveT);saveT=setTimeout(()=>{if(!dbDoc)return;setSync("Sincronizando…",false);
     dbDoc.set(JSON.parse(JSON.stringify(S))).then(()=>setSync("Sincronizado",true)).catch(()=>setSync("Salvo neste aparelho",true))},700);
 }
@@ -596,7 +554,7 @@ function vIA(){
 function vAjustes(){
   return'<div class="head"><div><h1>Ajustes</h1><div class="sub">Perfil, backup e privacidade.</div></div></div>'+
   '<div class="grid g-2"><div class="panel pb"><h2 style="margin-bottom:14px">Perfil</h2><form id="fPerfil" class="fg"><label class="f full">Seu nome<input id="pNome" value="'+esc(S.nome)+'" placeholder="Ex.: Carlos"></label><label class="f full">Nome da empresa<input id="pEmp" value="'+esc(S.empresa)+'" placeholder="Ex.: Monteiro Confecções"></label><button class="btn pri" type="submit">Salvar perfil</button></form></div>'+
-  '<div class="panel pb"><h2>Privacidade</h2><p class="muted" style="margin:8px 0 14px">'+(dbDoc?"Seus dados ficam na sua área privada da conta e neste aparelho. Nem o criador da Órbita consegue abrir.":"Seus dados estão guardados neste aparelho. Limpar os dados do navegador apaga tudo, então faça backup.")+'</p><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn out" data-act="exportar">Baixar backup</button><button class="btn out" data-act="importar">Restaurar backup</button></div></div>'+
+  '<div class="panel pb"><h2>Privacidade</h2><p class="muted" style="margin:8px 0 14px">'+(dbDoc?"Seus dados ficam na sua área privada da conta e neste aparelho. Nem o criador da Órbita consegue abrir.":"Seus dados estão guardados neste aparelho. Os registros ficam neste navegador, sem prazo de expiração definido pelo app. Não há login nem sincronização entre aparelhos. Quem usa o mesmo perfil do navegador pode ver os mesmos registros. Limpar os dados, usar navegação anônima ou perder o aparelho pode apagar as anotações. Baixe backups regularmente e restaure em outro aparelho quando precisar.")+'</p><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn out" data-act="exportar">Baixar backup</button><button class="btn out" data-act="importar">Restaurar backup</button></div></div>'+
   '<div class="panel" style="align-self:start"><div class="ph"><div><h2>Memória da Órbita IA</h2><div class="sm muted">O que a IA aprendeu sobre você nas conversas.</div></div></div><div class="rows" style="margin-top:8px">'+(S.memoria.length?S.memoria.map(m=>'<div class="row"><div class="g"><div class="t" style="font-weight:400">'+esc(m.texto)+'</div><div class="m">'+fmtD(m.data)+'</div></div><button class="x" data-del="memoria:'+m.id+'" aria-label="Esquecer">×</button></div>').join(""):'<div class="empty">Nada ainda. Conte sobre você e sua empresa no chat.</div>')+'</div></div>'+
   '<div class="panel pb"><h2>Categorias personalizadas</h2><p class="muted" style="margin:8px 0 10px">Criadas por você ou pela IA ao registrar lançamentos.</p>'+((S.cats.entrada.length||S.cats.saida.length)?'<div style="display:flex;gap:6px;flex-wrap:wrap">'+S.cats.entrada.map(c=>'<span class="tag" style="color:var(--pos)">'+esc(c)+'</span>').join("")+S.cats.saida.map(c=>'<span class="tag">'+esc(c)+'</span>').join("")+'</div>':'<div class="sm muted">Nenhuma ainda. Ao lançar, escolha “+ Criar categoria…”.</div>')+'</div>'+
   '<div class="panel pb"><h2>Apagar tudo</h2><p class="muted" style="margin:8px 0 14px">Remove lançamentos, agenda, metas, orçamento e conversas.</p>'+(confirmWipe?'<div class="confirm">Isso não pode ser desfeito. <button class="btn danger" data-act="apagarSim">Sim, apagar</button><button class="btn out" data-act="apagarNao">Cancelar</button></div>':'<button class="btn danger" data-act="apagar">Apagar meus dados</button>')+'</div></div>';
@@ -730,7 +688,7 @@ document.addEventListener("submit",e=>{
 /* ---------- backup ---------- */
 function exportar(){
   const name="orbita-backup-"+today()+".json",blob=new Blob([JSON.stringify(S,null,2)],{type:"application/json"});
-  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500);toast("Backup salvo");
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500);toast("Download do backup iniciado");
 }
 $("#importFile").addEventListener("change",e=>{const f=e.target.files&&e.target.files[0];if(!f)return;const r=new FileReader();
   r.onload=()=>{try{const s=normalize(JSON.parse(r.result));if(!s)throw 0;S=s;S.exemplo=false;persist();toast("Backup restaurado");go("painel")}catch(err){toast("Arquivo de backup inválido")}};r.readAsText(f);e.target.value=""});
@@ -791,7 +749,7 @@ const TOOLS=[
  {name:"somar_na_meta",description:"Soma um valor ao progresso de uma meta existente, buscando pelo nome.",inputSchema:{type:"object",properties:{nome:{type:"string"},valor:{type:"number"}},required:["nome","valor"]},
   execute:i=>{const q=String(i.nome||"").toLowerCase(),g=S.metas.find(x=>x.nome.toLowerCase().includes(q)||q.includes(x.nome.toLowerCase()));if(!g)throw new Error("Meta não encontrada. Metas existentes: "+S.metas.map(x=>x.nome).join("; "));g.atual=(+g.atual||0)+Math.abs(+i.valor||0);note("Somado "+money(i.valor)+" em "+g.nome);return{ok:true}}},
  {name:"memorizar",description:"Salva na memória da Órbita um fato duradouro sobre o empresário, a empresa ou as preferências dele. Use uma frase curta e objetiva.",inputSchema:{type:"object",properties:{fato:{type:"string"}},required:["fato"]},
-  execute:i=>{const f=String(i.fato||"").trim().slice(0,200);if(!f)return{ok:false};if(!S.memoria.some(m=>m.texto.toLowerCase()===f.toLowerCase())){S.memoria.push({id:uid(),texto:f,data:today()});if(S.memoria.length>60)S.memoria=S.memoria.slice(-60)}return{ok:true}}},
+  execute:i=>{const f=String(i.fato||"").trim().slice(0,200);if(!f)return{ok:false};if(!S.memoria.some(m=>m.texto.toLowerCase()===f.toLowerCase())){S.memoria.push({id:uid(),texto:f,data:today()});}return{ok:true}}},
  {name:"esquecer",description:"Remove da memória um fato que ficou desatualizado ou que o empresário pediu para esquecer.",inputSchema:{type:"object",properties:{trecho:{type:"string",description:"Parte do texto do fato a remover"}},required:["trecho"]},
   execute:i=>{const q=String(i.trecho||"").toLowerCase(),n=S.memoria.length;S.memoria=S.memoria.filter(m=>!m.texto.toLowerCase().includes(q));return{removidos:n-S.memoria.length}}},
  {name:"definir_orcamento",description:"Define o limite mensal de gastos de uma categoria.",inputSchema:{type:"object",properties:{categoria:{type:"string"},limite:{type:"number"}},required:["categoria","limite"]},
@@ -821,8 +779,11 @@ window.OrbitaAssistente.ligar({
   tool:(n,i)=>{const t=TOOLS.find(x=>x.name===n);return t?t.execute(i):null}
 });
 render(false);
+persist();
+if(navigator.storage && navigator.storage.persist)navigator.storage.persist().catch(()=>{});
 sampleKnown=true;
 setInterval(()=>{const c=$("#clockS");if(!c)return;const n=new Date();c.textContent=":"+pad(n.getSeconds());if(n.getSeconds()===0){$("#clock").firstChild.nodeValue=pad(n.getHours())+":"+pad(n.getMinutes())}},1000);
 setInterval(()=>{if((tab==="painel"||tab==="agenda")&&!$("#sheetRoot").innerHTML&&(!document.activeElement||document.activeElement===document.body))render(true)},60000);
 })();
 </script>
+

@@ -37,7 +37,7 @@
       .replace(/\b(as|a|pras|para as)\s+\d{1,2}\b(?!\s*(reais|real|mil|k|conto))/g, " ");
   }
   function valorDe(texto) {
-    const s = semDatas(nrm(texto));
+    const s = converterValores(texto);
     const pats = [
       /r\$\s*(\d[\d.,]*)(\s*mil\b)?/,
       /(\d[\d.,]*)\s*(mil|k)\b/,
@@ -54,6 +54,52 @@
       return v;
     }
     return null;
+  }
+
+
+
+  // Variações comuns, sem correção aproximada de valores financeiros.
+  const grafias = {gastey:'gastei',gasteii:'gastei',gastei:'gastei',
+    resebi:'recebi',receby:'recebi',recebii:'recebi',recebir:'recebi',
+    paguei:'paguei',pagei:'paguei',paguey:'paguei',
+    gasolna:'gasolina',gazolina:'gasolina',gasolina:'gasolina',
+    anotei:'anota',anotta:'anota',anotaa:'anota',anote:'anote',
+    quatrocento:'quatrocentos',quatrocientos:'quatrocentos',
+    quinhento:'quinhentos',seiscento:'seiscentos',setessentos:'setecentos'};
+  const corrigir = t => String(t).replace(/[A-Za-zÀ-ÿ]+/g,w=>grafias[nrm(w)]||w);
+  const NUM = {zero:0,um:1,uma:1,dois:2,duas:2,tres:3,quatro:4,cinco:5,seis:6,
+    sete:7,oito:8,nove:9,dez:10,onze:11,doze:12,treze:13,catorze:14,quatorze:14,
+    quinze:15,dezesseis:16,dezasseis:16,dezessete:17,dezassete:17,dezoito:18,
+    dezenove:19,dezanove:19,vinte:20,trinta:30,quarenta:40,cinquenta:50,
+    sessenta:60,setenta:70,oitenta:80,noventa:90,cem:100,cento:100,
+    duzentos:200,duzentas:200,trezentos:300,trezentas:300,quatrocentos:400,
+    quatrocentas:400,quinhentos:500,quinhentas:500,seiscentos:600,
+    seiscentas:600,setecentos:700,setecentas:700,oitocentos:800,oitocentas:800,
+    novecentos:900,novecentas:900};
+  const nword = '(?:'+Object.keys(NUM).join('|')+'|mil|milhao|milhoes)';
+  const extensoRE = new RegExp('\\b'+nword+'(?:\\s+(?:e\\s+)?'+nword+')*\\b','g');
+  function lerExtenso(t) {
+    let total=0,grupo=0;
+    for(const w of t.split(/\s+/)){
+      if(w==='e')continue;
+      if(w==='mil'){total+=(grupo||1)*1000;grupo=0;}
+      else if(w==='milhao'||w==='milhoes'){total=(total+grupo||1)*1000000;grupo=0;}
+      else grupo+=NUM[w]||0;
+    }
+    return total+grupo;
+  }
+  function converterValores(texto) {
+    const normal=nrm(corrigir(texto));
+    // Remover datas e horários antes de converter palavras em números.
+    const t=semDatas(normal);
+    return t.replace(extensoRE,(m,offset)=>{
+      const antes=t.slice(0,offset),depois=t.slice(offset+m.length);
+      if(/\b(dia|as|a|para as|pras)\s*$/.test(antes)||/^\s*(horas?|h)\b/.test(depois))return m;
+      // Artigos isolados ("um cliente") não são dinheiro.
+      if(/^(um|uma|dois|duas)$/.test(m)&&!/^\s*(reais?|centavos?|mil)\b/.test(depois))return m;
+      return String(lerExtenso(m));
+    }).replace(/(\d+)\s+reais?\s+e\s+(\d+)\s+centavos?\b/g,(_,a,b)=>a+','+b.padStart(2,'0'))
+      .replace(/(\d+)\s+centavos?\b/g,(_,a)=>'0,'+a.padStart(2,'0'));
   }
 
   /* ---------------- datas e horas ---------------- */
@@ -205,7 +251,7 @@
     const categoria = categoriaDe(s, tipo);
     const conta = contaDe(s, categoria);
     const d = dataDe(txt, false) || new Date();
-    let descricao = limpar(txt) || categoria;
+    let descricao = limpar(converterValores(txt)) || categoria;
     if (descricao.length < 2) descricao = categoria;
     C.tool("registrar_lancamento", { tipo, valor, descricao, categoria, conta, data: iso(d) });
     ultimo = { k: "tx", id: C.S().tx[C.S().tx.length - 1].id };
@@ -228,6 +274,7 @@
   }
 
   function responder(txt) {
+    txt = corrigir(txt);
     const S = C.S();
     const s = nrm(txt);
     if (!s) return "Pode falar. 🙂";
@@ -418,6 +465,7 @@
   window.OrbitaAssistente = {
     ligar(core) { C = core; },
     responder,
-    _teste: { valorDe, dataDe, horaDe, limpar, categoriaDe }
+    _teste: { converterValores, corrigir, valorDe, dataDe, horaDe, limpar, categoriaDe }
   };
 })();
+

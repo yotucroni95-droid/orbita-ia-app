@@ -1,10 +1,10 @@
 /* Órbita IA: guarda o app no celular para abrir na hora, mesmo sem internet.
    A versão abaixo é atualizada pelo build.py a cada publicação. */
-const VERSION = 'orbita-ia-20261113b';
+const VERSION = 'orbita-ia-20261113c';
 const CORE = [
   './',
   'index.html',
-  'assistente.js?v=20261113b',
+  'assistente.js?v=20261113c',
   'manifest.webmanifest',
   'assets/logo192.png',
   'assets/app/icon-192.png',
@@ -17,7 +17,7 @@ self.addEventListener('install', e => {
 
 self.addEventListener('activate', e => {
   e.waitUntil(caches.keys()
-    .then(keys => Promise.all(keys.filter(k => k !== VERSION).map(k => caches.delete(k))))
+    .then(keys => Promise.all(keys.filter(k => k.startsWith('orbita-ia-') && k !== VERSION).map(k => caches.delete(k))))
     .then(() => self.clients.claim()));
 });
 
@@ -45,3 +45,4 @@ self.addEventListener('fetch', e => {
     return hit || net;
   }));
 });
+

@@ -9,7 +9,7 @@ Uso: python3 build.py
 from pathlib import Path
 
 raiz = Path(__file__).parent
-VERSAO = "20261113b"  # mude a cada publicação para os celulares baixarem a novidade
+VERSAO = "20261113c"  # mude a cada publicação para os celulares baixarem a novidade
 
 src = (raiz / "app.src.html").read_text(encoding="utf-8")
 fim_head = src.index("</style>") + len("</style>")
@@ -56,3 +56,4 @@ sw = re.sub(r"const VERSION = '[^']*';", f"const VERSION = 'orbita-ia-{VERSAO}';
 sw = re.sub(r"assistente\.js\?v=[^']*'", f"assistente.js?v={VERSAO}'", sw)
 (raiz / "sw.js").write_text(sw, encoding="utf-8")
 print("index.html gerado · versão", VERSAO)
+
