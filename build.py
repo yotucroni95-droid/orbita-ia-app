@@ -9,7 +9,7 @@ Uso: python3 build.py
 from pathlib import Path
 
 raiz = Path(__file__).parent
-VERSAO = "20261113e"  # mude a cada publicação para os celulares baixarem a novidade
+VERSAO = "20261113f"  # mude a cada publicação para os celulares baixarem a novidade
 
 src = (raiz / "app.src.html").read_text(encoding="utf-8")
 fim_head = src.index("</style>") + len("</style>")
@@ -22,14 +22,14 @@ head = f"""<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="description" content="Órbita IA: anote gastos, recebimentos, compromissos, tarefas e metas conversando. Funciona sem internet e guarda tudo só no seu celular.">
-<link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" type="image/png" sizes="64x64" href="assets/app/favicon-64.png">
-<link rel="apple-touch-icon" href="assets/app/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest?v=20261113-icons2">
+<link rel="icon" type="image/png" sizes="64x64" href="assets/app/favicon-64.png?v=20261113-icons2">
+<link rel="apple-touch-icon" type="image/png" sizes="180x180" href="assets/app/apple-touch-icon.png?v=20261113-icons2">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Órbita IA">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-{splash}
+<meta property="og:title" content="Órbita IA"><meta property="og:image" content="https://yotucroni95-droid.github.io/orbita-ia-app/assets/app/icon-512.png?v=20261113-icons2"><meta name="twitter:card" content="summary">\n{splash}
 <script src="base-conhecimento.js?v={VERSAO}"></script>
 <script src="assistente.js?v={VERSAO}"></script>
 """
@@ -62,3 +62,4 @@ print("index.html gerado · versão", VERSAO)
 sw = (raiz / "sw.js").read_text()
 sw = re.sub(r"base-conhecimento\.js\?v=[^' ]*", f"base-conhecimento.js?v={VERSAO}", sw)
 (raiz / "sw.js").write_text(sw)
+
